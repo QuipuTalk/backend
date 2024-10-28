@@ -1,0 +1,24 @@
+# Ignorar el archivo de entorno que contiene credenciales sensibles
+.env
+
+# Ignorar las carpetas de caché de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorar archivos de configuración del editor (PyCharm, VSCode, etc.)
+.idea/
+.vscode/
+
+# Ignorar archivos de dependencias de paquetes de Python
+*.egg-info/
+dist/
+build/
+
+# Ignorar configuraciones de despliegue
+*.log
+*.sqlite3
+
+# Ignorar archivos de testing temporales
+*.test-output/
+*.coverage
