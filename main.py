@@ -1,12 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import httpx
-import os
-from dotenv import load_dotenv
 from httpx import RequestError
-from prompts import PROMPTS  # Importar el diccionario de prompts desde otro archivo
-
-load_dotenv()
+from utils import get_gpt4_responses, chat_sessions
+from utils import create_new_session
+from utils import update_session_style
 
 app = FastAPI()
 
@@ -18,73 +15,45 @@ class Message(BaseModel):
 class UserRequest(BaseModel):
     user_message: str
     style: str  # formal, informal, neutral
-    chat_history: list[Message] = []  # Historial de mensajes para mantener el contexto
+    session_id: str  # Identificador único para la sesión de chat
+    user_response: str = None  # Respuesta seleccionada o personalizada por el usuario (opcional)
 
-# Define una función para conectarse con GPT-4 y obtener las respuestas sugeridas
-async def get_gpt4_responses(user_message: str, style: str, chat_history: list[Message]):
-    openai_api_key = os.getenv("OPENAI_API_KEY")  # Obtén la API key desde las variables de entorno
+class ChangeStyleRequest(BaseModel):
+    session_id: str
+    new_style: str  # Nuevo estilo: formal, informal, neutral
 
-    # Verificar si la API Key está presente
-    if not openai_api_key:
-        raise HTTPException(status_code=500, detail="API Key not found")
-
-    # Si el historial de chat está vacío, agregar el prompt inicial
-    if not chat_history:
-        prompt = PROMPTS.get(style, PROMPTS["neutral"])
-        chat_history.append(Message(role="system", content=prompt))
-
-    # Agregar el mensaje del usuario al historial
-    chat_history.append(Message(role="user", content=user_message))
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {openai_api_key}"
-    }
-
-    # Convertir el historial de mensajes a diccionarios
-    messages = [message.dict() for message in chat_history]
-
-    data = {
-        "model": "gpt-4o-mini",
-        "messages": messages,
-        "max_tokens": 300,
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers=headers,
-            json=data,
-        )
-
-    # Manejo de la respuesta de la API
-    if response.status_code == 200:
-        try:
-            response_data = response.json()
-            return response_data["choices"][0]["message"]["content"]
-        except (KeyError, IndexError) as e:
-            raise HTTPException(status_code=500, detail="Unexpected response format from OpenAI API")
-    else:
-        raise HTTPException(status_code=response.status_code, detail="Error contacting OpenAI API")
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
+@app.get("/start_session/")
+async def start_session():
+    session_id = create_new_session()
+    return {"session_id": session_id}
 
 # Define una nueva ruta para procesar el mensaje del usuario y obtener respuestas sugeridas
 @app.post("/get_suggested_replies/")
 async def get_suggested_replies(user_request: UserRequest):
     try:
-        responses = await get_gpt4_responses(user_request.user_message, user_request.style, user_request.chat_history)
+        responses = await get_gpt4_responses(user_request.user_message, user_request.style, user_request.session_id, user_request.user_response)
         return {"suggested_replies": responses}
     except RequestError as e:
         raise HTTPException(status_code=503, detail="Service unavailable, could not reach OpenAI API")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Endpoint para obtener el historial de la conversación
+@app.get("/get_chat_history/{session_id}")
+async def get_chat_history(session_id: str):
+    if session_id not in chat_sessions:
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+    return {"chat_history": [message.dict() for message in chat_sessions[session_id]]}
+
+# Endpoint para cambiar el estilo de una sesión activa
+@app.post("/change_style/")
+async def change_style(request: ChangeStyleRequest):
+    try:
+        update_session_style(request.session_id, request.new_style)
+        return {"message": f"Style updated to {request.new_style} for session {request.session_id}"}
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
