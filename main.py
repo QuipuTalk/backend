@@ -22,21 +22,33 @@ class ChangeStyleRequest(BaseModel):
     session_id: str
     new_style: str  # Nuevo estilo: formal, informal, neutral
 
+
+@app.get("/hello_world/")
+async def hello_world():
+    return {"message": "Hello World"}
+
+
 @app.get("/start_session/")
 async def start_session():
     session_id = create_new_session()
     return {"session_id": session_id}
 
 # Define una nueva ruta para procesar el mensaje del usuario y obtener respuestas sugeridas
+from fastapi.responses import JSONResponse
+
 @app.post("/get_suggested_replies/")
 async def get_suggested_replies(user_request: UserRequest):
     try:
         responses = await get_gpt4_responses(user_request.user_message, user_request.style, user_request.session_id, user_request.user_response)
-        return {"suggested_replies": responses}
-    except RequestError as e:
+        return JSONResponse(
+            content={"suggested_replies": responses},
+            headers={"Content-Type": "application/json; charset=utf-8"}
+        )
+    except RequestError:
         raise HTTPException(status_code=503, detail="Service unavailable, could not reach OpenAI API")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # Endpoint para obtener el historial de la conversación
