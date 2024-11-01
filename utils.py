@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from dotenv import load_dotenv
 from pydantic import BaseModel
 import logging
-from api.prompts import PROMPTS# Importar el diccionario de prompts desde otro archivo
+from prompts import PROMPTS# Importar el diccionario de prompts desde otro archivo
 from typing import Dict, List
 import uuid
 

@@ -1,14 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from httpx import RequestError
-from api.utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style
+from utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style
 import logging
 
 app = FastAPI()
 
 logging.basicConfig(level=logging.INFO)
 logging.info("FastAPI app is running")
-
 
 # Define un modelo para recibir los datos que necesitas del cliente
 class Message(BaseModel):
@@ -26,10 +25,13 @@ class ChangeStyleRequest(BaseModel):
     new_style: str  # Nuevo estilo: formal, informal, neutral
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Server is up and running!"}
+
 @app.get("/hello_world/")
 async def hello_world():
     return {"message": "Hello World"}
-
 
 @app.get("/start_session/")
 async def start_session():
