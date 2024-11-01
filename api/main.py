@@ -1,11 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from httpx import RequestError
-from utils import get_gpt4_responses, chat_sessions
-from utils import create_new_session
-from utils import update_session_style
+from api.utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style
+import logging
 
 app = FastAPI()
+
+logging.basicConfig(level=logging.INFO)
+logging.info("FastAPI app is running")
+
 
 # Define un modelo para recibir los datos que necesitas del cliente
 class Message(BaseModel):
