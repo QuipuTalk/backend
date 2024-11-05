@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from httpx import RequestError
 from utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style
 import logging
+from models import UserResponseRequest  # Necesitarás crear este modelo
 
 app = FastAPI()
 
@@ -44,13 +45,26 @@ from fastapi.responses import JSONResponse
 @app.post("/get_suggested_replies/")
 async def get_suggested_replies(user_request: UserRequest):
     try:
-        responses = await get_gpt4_responses(user_request.user_message, user_request.style, user_request.session_id, user_request.user_response)
+        responses = await get_gpt4_responses(user_request.user_message, user_request.style, user_request.session_id)
         return JSONResponse(
             content={"suggested_replies": responses},
             headers={"Content-Type": "application/json; charset=utf-8"}
         )
     except RequestError:
         raise HTTPException(status_code=503, detail="Service unavailable, could not reach OpenAI API")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/send_user_response/")
+async def send_user_response(user_response_request: UserResponseRequest):
+    try:
+        await handle_user_response(user_response_request.user_response, user_response_request.session_id)
+        return JSONResponse(
+            content={"status": "success"},
+            headers={"Content-Type": "application/json; charset=utf-8"}
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
