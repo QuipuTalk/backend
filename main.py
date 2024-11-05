@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from httpx import RequestError
-from utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style
+from utils import get_gpt4_responses, chat_sessions, create_new_session, update_session_style, handle_user_response
 import logging
 from models import UserResponseRequest  # Necesitarás crear este modelo
 
@@ -19,7 +19,6 @@ class UserRequest(BaseModel):
     user_message: str
     style: str  # formal, informal, neutral
     session_id: str  # Identificador único para la sesión de chat
-    user_response: str = None  # Respuesta seleccionada o personalizada por el usuario (opcional)
 
 class ChangeStyleRequest(BaseModel):
     session_id: str
