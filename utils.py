@@ -7,6 +7,7 @@ import logging
 from prompts import PROMPTS# Importar el diccionario de prompts desde otro archivo
 from typing import Dict, List
 import uuid
+from prompts import CORRECTION_GRAMMAR_PROMPT
 
 load_dotenv()
 
@@ -20,6 +21,51 @@ chat_sessions: Dict[str, List[BaseModel]] = {}
 class Message(BaseModel):
     role: str  # 'user' o 'assistant'
     content: str
+
+# Nueva función para obtener el texto corregido
+async def get_corrected_text(text_to_correct: str) -> str:
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+
+    # Verificar si la API Key está presente
+    if not openai_api_key:
+        logging.error("API Key not found")
+        raise HTTPException(status_code=500, detail="API Key not found")
+
+    # Preparar el mensaje para el prompt
+    prompt_message = f"{CORRECTION_GRAMMAR_PROMPT}\nEntrada: \"{text_to_correct}\""
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {openai_api_key}"
+    }
+
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt_message}],
+        "max_tokens": 150,  # Ajusta según el tamaño esperado de la respuesta
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=data,
+            )
+
+        if response.status_code == 200:
+            response_data = response.json()
+            corrected_text = response_data["choices"][0]["message"]["content"].strip()
+            return corrected_text
+        else:
+            logging.error(f"Error contacting OpenAI API: {response.status_code} {response.text}")
+            raise HTTPException(status_code=response.status_code, detail="Error contacting OpenAI API")
+
+    except httpx.RequestError as exc:
+        logging.error(f"An error occurred while requesting OpenAI API: {exc}")
+        raise HTTPException(status_code=503, detail="Service unavailable, could not reach OpenAI API")
+
+
 
 # Define una función para conectarse con GPT-4 y obtener las respuestas sugeridas
 async def get_gpt4_responses(user_message: str, style: str, session_id: str):
