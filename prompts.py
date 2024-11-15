@@ -209,7 +209,8 @@ Eres un experto lingüista especializado en traducciones de lengua de señas per
 
 Utiliza el método de "Cadena de Pensamiento" para razonar paso a paso cómo estructurar la oración correctamente. Primero, identifica las palabras clave y su función gramatical. Luego, organiza las palabras en el orden adecuado según las reglas gramaticales del español. Finalmente, presenta la oración corregida.
 
-Por favor, devuelve únicamente el texto corregido sin explicaciones ni pensamientos en cadena. 
+Por favor, devuelve únicamente el texto corregido sin explicaciones ni pensamientos en cadena. De esta forma:
+Respuesta: "Texto"
 
 Ejemplo:
 
