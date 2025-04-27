@@ -9,10 +9,6 @@ from utils import (
     handle_user_response,
     get_corrected_text
 )
-#from translation_utils import (
-#    image_process,
-#    keypoint_extraction
-#)
 
 from request_utils import (
     UserRequest,
@@ -23,30 +19,10 @@ from request_utils import (
 
 import logging
 from models import UserResponseRequest  # Necesitarás crear este modelo
-
-#Importaciones para el modelo
-#import mediapipe as mp
-#import cv2
-#import numpy as np
-#import tempfile
-#import shutil
-#from keras.api.models import load_model
-#import os
-
 app = FastAPI()
 
 logging.basicConfig(level=logging.INFO)
 logging.info("FastAPI app is running")
-
-
-
-#Caragar el modelo al iniciar la aplicación
-#model = load_model('eight_words_good.h5')
-#actions = np.array(['kilogramo', 'pagar', 'por favor','querer','tomate','uno','yape','yo'])  # Reemplaza con tus acciones reales
-#mp_holistic = mp.solutions.holistic
-#holistic = mp_holistic.Holistic(min_detection_confidence=0.75, min_tracking_confidence=0.75)
-
-
 
 @app.get("/")
 def read_root():
@@ -67,7 +43,6 @@ from fastapi.responses import JSONResponse
 # main.py
 
 from prompts import CORRECTION_GRAMMAR_PROMPT  # Asegúrate de importar el prompt
-
 
 # Nuevo endpoint para corregir el texto
 @app.post("/get_text_correction/")
@@ -130,53 +105,3 @@ async def change_style(request: ChangeStyleRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-# Nuevo endpoint para traducir el video
-#@app.post("/translate_video/")
-#async def translate_video(video: UploadFile = File(...)):
-#    # Guardar el video temporalmente
-#    try:
-#        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
-#            shutil.copyfileobj(video.file, tmp)
-#            tmp_path = tmp.name
-#
-#        # Abrir el video con OpenCV
-#        cap = cv2.VideoCapture(tmp_path)
-#        if not cap.isOpened():
-#            return {"error": "No se puede procesar el video."}
-#
-#        sentence, keypoints_sequence, last_prediction = [], [], ''
-#        while True:
-#            ret, frame = cap.read()
-#            if not ret:
-#                break
-#
-#            # Procesar el frame
-#            results = image_process(frame, holistic)
-#            keypoints = keypoint_extraction(results)
-#            keypoints_sequence.append(keypoints)
-#
-#            if len(keypoints_sequence) == 10:
-#                keypoints_array = np.array(keypoints_sequence)
-#                prediction = model.predict(keypoints_array[np.newaxis, :, :])
-#                keypoints_sequence = []
-#
-#                if np.amax(prediction) > 0.9:
-#                    predicted_action = actions[np.argmax(prediction)]
-#                    if last_prediction != predicted_action:
-#                        sentence.append(predicted_action)
-#                        last_prediction = predicted_action
-#
-#                if len(sentence) > 7:
-#                    sentence = sentence[-7:]
-#
-#        cap.release()
-#        os.remove(tmp_path)  # Eliminar el archivo temporal
-#
-#        translation = ' '.join(sentence)
-#        return {"translation": translation}
-#
-#    except Exception as e:
-#        logging.error(f"Error al procesar el video: {e}")
-#        raise HTTPException(status_code=500, detail="Error al procesar el video")

@@ -4,10 +4,12 @@ from fastapi import HTTPException
 from dotenv import load_dotenv
 from pydantic import BaseModel
 import logging
-from prompts import PROMPTS# Importar el diccionario de prompts desde otro archivo
+from prompts_v2 import PROMPTS# Importar el diccionario de prompts desde otro archivo
+from prompts_v2 import CORRECTION_GRAMMAR_PROMPT
+
 from typing import Dict, List
 import uuid
-from prompts import CORRECTION_GRAMMAR_PROMPT
+
 
 load_dotenv()
 
