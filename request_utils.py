@@ -18,3 +18,7 @@ class ChangeStyleRequest(BaseModel):
 class TextCorrectionRequest(BaseModel):
     text: str
 
+class FeedbackRequest(BaseModel):
+    session_id: str
+    rating: int         # 1..5
+    comment: str = ""   # opcional

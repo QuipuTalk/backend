@@ -1,5 +1,8 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from pydantic import BaseModel
+# main.py (al inicio, junto a chat_sessions)
+from typing import List, Dict
+from request_utils import FeedbackRequest
 from httpx import RequestError
 from utils import (
     get_gpt4_responses,
@@ -19,6 +22,8 @@ from request_utils import (
 
 import logging
 from models import UserResponseRequest  # Necesitarás crear este modelo
+
+feedback_store: Dict[str, List[FeedbackRequest]] = {}
 app = FastAPI()
 
 logging.basicConfig(level=logging.INFO)
@@ -84,6 +89,25 @@ async def send_user_response(user_response_request: UserResponseRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/send_feedback/")
+async def send_feedback(feedback: FeedbackRequest):
+    # Validar que la sesión exista
+    if feedback.session_id not in chat_sessions:
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+
+    # Inicializar lista si es la primera vez
+    if feedback.session_id not in feedback_store:
+        feedback_store[feedback.session_id] = []
+
+    # Guardar el feedback
+    feedback_store[feedback.session_id].append(feedback)
+
+    # (Opcional) imprimir en logs para seguimiento
+    logging.info(f"Feedback recibido: session={feedback.session_id} "
+                 f"rating={feedback.rating} comment='{feedback.comment}'")
+
+    return {"status": "success"}
 
 
 
